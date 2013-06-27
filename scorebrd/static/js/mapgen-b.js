@@ -212,7 +212,7 @@ $(document).ready(function () {
             // If we are loading a map
             if(mapID>0) // This is only executed during initiating, and it is okay to change the mapID when saving a newly created map
             {
-                alert("Loading map!!");
+                //alert("Loading map!!");
                 // Ask the server for maze data!
                 $.ajax({
                     type: "POST",
@@ -220,7 +220,6 @@ $(document).ready(function () {
                     data: {"json": JSON.stringify({"mapID": mapID, "action": "getMaze"})},
                     dataType: "json",
                     success: function(data){
-                        alert(JSON.stringify(data));
                         name.val(data.name);
                         // Iterate through walls and load walls
                         $("td.border").each(function(i){
