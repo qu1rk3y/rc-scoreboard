@@ -20,8 +20,10 @@ $(document).ready(function () {
             if($(this).hasClass('victim') || $(this).children('.start').length == 1 || $(this).hasClass('black-tile')){
                 json.squares[i] = {};
                 
-                if($(this).hasClass('victim'))
-                    json.squares[i].victim = true;
+                if($(this).hasClass('victim')) {
+                    var loc = $(this).children('img').attr('src');
+                    json.squares[i].victim = parseInt(loc.substr(loc.length - 5, 1));
+                }
                 if($(this).children('.start').length == 1)
                     json.squares[i].start = true;
                 if($(this).hasClass('black-tile'))
@@ -161,30 +163,47 @@ $(document).ready(function () {
                 $(this).toggleClass("wall");    
             });
             
-            $('.square').click(function(){
+            $('.square').click(function(e){
                 if($(this).hasClass('black-tile')){
                     $(this).removeClass('black-tile');
-                }else if($(this).hasClass('victim')){
-                    $(this).addClass('black-tile').removeClass('victim').children('.victim').remove();;
                 }else{
+                   var loc = -1;
+                   if($(this).hasClass('victim')){
+                        loc = $(this).children('img').attr('src');
+                        loc = loc.substr(loc.length - 5, 1);
+                    }
+                    // box isn't where I expected it...
                     var x = e.pageX - this.offsetLeft - 8;
                     var y = e.pageY - this.offsetTop - 113;
+                    var new_victim = -1;
                     if(plusminus(y, 25, 10) && plusminus(x, 10, 10)) {
-                    	$(this).addClass('victim').append('<img src="' + IMG_DIR + 'img/rescueB/victim0.png" class="victim">'); // left
+                        new_victim = 0;
                     }
                     else if(plusminus(y, 25, 10) && plusminus(x, 40, 10)) {
-                    	$(this).addClass('victim').append('<img src="' + IMG_DIR + 'img/rescueB/victim2.png" class="victim">'); // right
+                        new_victim = 2;
                     }
                     else if(plusminus(y, 5, 5) && plusminus(x, 25, 10)) {
-                    	$(this).addClass('victim').append('<img src="' + IMG_DIR + 'img/rescueB/victim3.png" class="victim">'); // top
+                        new_victim = 3;
                     }
                     else if(plusminus(y, 45, 5) && plusminus(x, 25, 10)) {
-                    	$(this).addClass('victim').append('<img src="' + IMG_DIR + 'img/rescueB/victim1.png" class="victim">'); // bottom
-                    }              
+                        new_victim = 1;
+                    }
+                    else {
+                        $(this).addClass('black-tile').removeClass('victim').children('.victim').remove();
+                    }
+                    $(this).removeClass('victim').children('.victim').remove();
+                    if(new_victim > -1 && loc != new_victim) {
+                        $(this).addClass('victim').append('<img src="' + IMG_DIR + 'img/rescueB/victim' + new_victim + '.png" class="victim">'); // right
+                    }
                 }
             }).contextmenu(function(){
-                $('.start').remove();
-                $(this).append('<img src="' + IMG_DIR + 'img/rescueB/start.png" class="start">');
+                if($(this).children().hasClass('start')){
+                    $('.start').remove();
+                }
+                else {
+                    $('.start').remove();
+                    $(this).append('<img src="' + IMG_DIR + 'img/rescueB/start.png" class="start">');
+                }
                 return false;
             });
             
@@ -201,6 +220,7 @@ $(document).ready(function () {
                     data: {"json": JSON.stringify({"mapID": mapID, "action": "getMaze"})},
                     dataType: "json",
                     success: function(data){
+                        alert(JSON.stringify(data));
                         name.val(data.name);
                         // Iterate through walls and load walls
                         $("td.border").each(function(i){
@@ -211,8 +231,8 @@ $(document).ready(function () {
                         $("td.square").each(function(i){
                             // If the square exists (contains any data at all)
                             if(data.squares[i]){
-                                if(data.squares[i].victim){
-                                    $(this).addClass('victim').append('<img src="' + IMG_DIR + 'img/rescueB/victim'+Math.floor(1+Math.random()*3)+'.png" class="victim">');
+                                if(data.squares[i].victim != undefined){
+                                    $(this).addClass('victim').append('<img src="' + IMG_DIR + 'img/rescueB/victim'+data.squares[i].victim+'.png" class="victim">');
                                 }else if(data.squares[i].black){
                                     $(this).addClass('black-tile');
                                 }
