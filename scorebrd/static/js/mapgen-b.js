@@ -203,9 +203,9 @@ $(document).ready(function () {
                             $(this).addClass('victim').append('<img src="' + IMG_DIR + 'img/rescueB/victim' + new_victim + '.png" class="victim">'); // right
                             //$(this).css('background', 'hsla(165, 35%, 50%, 0.3)');
                         }
-                        doMen();
                     }
                 }
+                doMen();
             }).contextmenu(function(){
                 if($(this).children().hasClass('start')){
                     $('.start').remove();

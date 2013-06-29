@@ -925,15 +925,50 @@ function populateAll() {
 function isBorder(a) {
     var x; var y;
     switch(a[0]) {
-        case 0: x=3;y=9;return (((a[1]!=a[2]&&a[1]==0) || (a[1]!=a[2]&&a[2]==0) || (a[1]!=a[2]&&a[1]==x) || (a[1]!=a[2]&&a[2]==y) || (a[1]==a[2]&&a[1]==0)) && !(a[1]==0&&a[2]==6));
+        case 0: x=3;y=9;return (((a[1]!=a[2]&&a[1]==0) || (a[1]!=a[2]&&a[2]==0) || (a[1]!=a[2]&&a[1]==x) || (a[1]!=a[2]&&a[2]==y) || (a[1]==a[2]&&a[1]==0)) || (a[1]==a[2]&&(a[1]==x||a[2]==y)) && !(a[1]==0&&a[2]==6));
         case 1: return true;
         case 2: x=3;y=2;return (((a[1]!=a[2]&&a[1]==0) || (a[1]!=a[2]&&a[2]==0) || (a[1]!=a[2]&&a[1]==x) || (a[1]!=a[2]&&a[2]==y) || (a[1]==a[2]&&a[1]==0)));// && !(a[1]==0&&a[2]==2));
     }
     return false;
 }
 
+function isSetSame(a, b) {
+    return (a[0] == b[0] && a[1] == b[1] && a[2] == b[2]);
+}
+
+function isEdge(a, side) {
+    var v = a[1]; var w = a[2];
+    var x = 3; var y = 9;
+    if(v == 0 && w == 0 && (side == 0 || side == 3)) {
+        return true;
+    }
+    else if(v == 0 && w == y && (side == 2 || side == 3)) {
+        return true;
+    }
+    else if(v == x && w == 0 && (side == 0 || side == 1)) {
+        return true;
+    }
+    else if(v == x && w == y && (side == 1 || side == 2)) {
+        return true;
+    }
+    else if(v == 0 && w > 0 && w < y && side == 3) {
+        return true;
+    }
+    else if(v == x && w > 0 && w < y && side == 1) {
+        return true;
+    }
+    else if(v > 0 && v < x && w == 0 && side == 0) {
+        return true;
+    }
+    else if(v > 0 && v < x && w == y && side == 2) {
+        return true;
+    }
+    return false;
+}
+
 // generates adjacent edges (hacky due to horrible HTML design - thanks Fredrik ;-) )
-function getAdjacents(a, side) {
+function getAdjacents(a, side, orig) {
+    //console.log(orig);
     var adj = Array();
     var tests = [
         [
@@ -942,15 +977,19 @@ function getAdjacents(a, side) {
             [1,0],
             [1,3],
             [3,0],
-            [3,1]
+            [3,1],
+            [0,0],
+            [2,0]
         ],
-        [
+        [   
             [0,1],
             [0,2],
             [1,0],
             [1,2],
             [2,1],
-            [2,0]
+            [2,0],
+            [3,1],
+            [1,1]
         ],
         [
             [1,3],
@@ -958,7 +997,9 @@ function getAdjacents(a, side) {
             [2,1],
             [2,3],
             [3,1],
-            [3,2]
+            [3,2],
+            [0,2],
+            [2,2]
         ],
         [
             [0,3],
@@ -966,16 +1007,86 @@ function getAdjacents(a, side) {
             [2,0],
             [2,3],
             [3,2],
-            [3,0]
+            [3,0],
+            [3,3],
+            [1,3]
         ]
     ];
 
     var n = [getCoordFromWall(a, 0), getCoordFromWall(a, 1), getCoordFromWall(a, 2), getCoordFromWall(a, 3)];
     for(var i = 0; i < 6; i++) {
+        var next_test = n[tests[side][i][0]];
+        var next_wall = tests[side][i][1];
+        /*if(i == 6 || i == 7) {
+            if(orig[1] != next_wall) {
+                console.log('top thing');
+                continue;
+            }
+            console.log(next_test, next_wall);
+            if(isSetSame(a, orig[0])) {
+                console.log('set same');
+                if(next_wall == side) {
+                    console.log('next = side');
+                    if(isBorder(next_test)) {
+                        console.log('next is border');
+                        if(side == 2 || side == 0) {
+                            if(isBorder(getCoordFromWall(orig[0], 2)) || isBorder(getCoordFromWall(orig[0], 0))) {
+                                console.log('one across is border');
+                                console.log('BYE', next_test)
+                                if(!getWalls(next_test)[1] && !getWalls(next_test)[3])
+                                    continue;
+                            }
+                        }
+                        else if(side == 1 || side == 3) {
+                            if(isBorder(getCoordFromWall(orig[0], 1)) || isBorder(getCoordFromWall(orig[0], 3))) {
+                                console.log('one across is border');
+                                console.log('BYE', next_test);
+                                if(!getWalls(next_test)[2] && !getWalls(next_test)[0])
+                                    continue;
+                            }
+                        }
+                    }
+                }
+                else {
+                    continue;
+                }
+            }
+        }*/
+        //console.log('STAYING',next_test);
+        //console.log(isBorder(n[tests[side][i][0]]));
+        //if((isBorder(n[tests[side][i][0]]) && tests[side][i][1] == side) || (n[tests[side][i][0]] == -1 && tests[side][i][1] == side) && (i == 7 || i == 8)) {
+        //    console.log('here');
+            //continue;
+            //}
+        /*if((isBorder(n[tests[side][i][0]]) && tests[side][i][1] == side) || (n[tests[side][i][0]] == -1 && tests[side][i][1] == side) 
+            && (a[0] == orig[0] && a[1] == orig[1] && a[2] == orig[2])) {
+                if(side == 0 || side == 2) {
+                    if(n[tests[side][i][0]][1] == orig[1]) {
+                        continue;
+                    }
+                }
+                else if(side == 1 || side == 3) {
+                    if(n[tests[side][i][0]][2] == orig[2]) {
+                        continue;
+                    }
+                }
+//                console.log(n[tests[side][i][0]], tests[side][i][1]);
+//            console.log('finally');
+//            continue;
+        }
+        /*if(n[tests[side][i][0]] == -1) {
+            if(tests[side][i][1] != side) {
+                adj.push(['b',1]);
+                continue;
+            }
+
+        }*/
         if(n[tests[side][i][0]] == -1) {
             adj.push(['b',1]);
             continue;
         }
+            //console.log(n[tests[side][i][0]]);
+         //                       console.log(n[tests[side][i][0]]);
         var walls = getWalls(n[tests[side][i][0]]);
         var wall = walls[tests[side][i][1]][0];
         if(wall == 1) {
@@ -1000,11 +1111,12 @@ function isExplored(x, side) {
 // checks to see whether a given wall side is floating (for victim)
 function isFloating(a, side) {
     if(isBorder(a)) {
+        //console.log('why not here?');
         return false;
     }
     else {
         clear();
-        return isFloatingR(a, side);
+        return isFloatingR(a, side, [a,side]);
     }
 }
 
@@ -1012,15 +1124,16 @@ function isFloating(a, side) {
 var val = true;
 
 // depth-first search for finding a border edge
-function isFloatingR(a, side) {
+function isFloatingR(a, side, orig) {
     explored.push([a, side]);
 
     if(a[0] == 'b') {
         return false;
     }
-    var adj = getAdjacents(a, side);
+    var adj = getAdjacents(a, side, orig);
+    console.log(adj);
     for(var i = 0; i < adj.length; i++) {
-        val = isFloatingR(adj[i][0], adj[i][1]);
+        val = isFloatingR(adj[i][0], adj[i][1], orig);
     }
     return val;
 }
@@ -1041,7 +1154,7 @@ function evaluateWalls() {
     // floor 0
     for(var i = 0; i < 4; i++) {
         for(var j = 0; j < 10; j++) {
-            for(var k = 0; k < 4; k++) {    
+            for(var k = 0; k < 4; k++) {
                 evaluateWall([0,i,j], k);
             }
         }
@@ -1081,16 +1194,16 @@ function setMenTypes() {
     // floor 0
     for(var i = 0; i < 4; i++) {
         for(var j = 0; j < 10; j++) {
-            for(var k = 0; k < 4; k++) {
-                if(getMan([0,i,j]) != -1) {
-                    if(maze[0][i][j].walls[k][1] == 1) {
-                        // floating
-                        squares[getSquareFromCoord([0,i,j])].children().first().attr('src', IMG_DIR + 'img/rescueB/victimf' + getMan([0,i,j]) + '.png');
-                    }
-                    else {
-                        // linear
-                        squares[getSquareFromCoord([0,i,j])].children().first().attr('src', IMG_DIR + 'img/rescueB/victiml' + getMan([0,i,j]) + '.png');
-                    }
+            if(getMan([0,i,j]) != -1) {
+                if(maze[0][i][j].walls[getMan([0,i,j])][1] == 1) {
+                    // floating
+                    //console.log('float');
+                    squares[getSquareFromCoord([0,i,j])].children().first().attr('src', IMG_DIR + 'img/rescueB/victimf' + getMan([0,i,j]) + '.png');
+                }
+                else {
+                    // linear
+                    //console.log('linear');
+                    squares[getSquareFromCoord([0,i,j])].children().first().attr('src', IMG_DIR + 'img/rescueB/victiml' + getMan([0,i,j]) + '.png');
                 }
             }
         }
@@ -1121,8 +1234,8 @@ function setMenTypes() {
 }
 
 function doMen() {
-    populateAll();
+    /*populateAll();
     evaluateWalls();
     squareArray();
-    setMenTypes(); 
+    setMenTypes();*/
 }
