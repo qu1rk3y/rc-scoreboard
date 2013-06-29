@@ -164,36 +164,44 @@ $(document).ready(function () {
             });
             
             $('.square').click(function(e){
-                if($(this).hasClass('black-tile')){
-                    $(this).removeClass('black-tile');
-                }else{
-                   var loc = -1;
-                   if($(this).hasClass('victim')){
-                        loc = $(this).children('img').attr('src');
-                        loc = loc.substr(loc.length - 5, 1);
-                    }
-                    // box isn't where I expected it...
-                    var x = e.pageX - this.offsetLeft - 8;
-                    var y = e.pageY - this.offsetTop - 113;
-                    var new_victim = -1;
-                    if(plusminus(y, 25, 10) && plusminus(x, 10, 10)) {
-                        new_victim = 0;
-                    }
-                    else if(plusminus(y, 25, 10) && plusminus(x, 40, 10)) {
-                        new_victim = 2;
-                    }
-                    else if(plusminus(y, 5, 5) && plusminus(x, 25, 10)) {
-                        new_victim = 3;
-                    }
-                    else if(plusminus(y, 45, 5) && plusminus(x, 25, 10)) {
-                        new_victim = 1;
-                    }
-                    else {
-                        $(this).addClass('black-tile').removeClass('victim').children('.victim').remove();
-                    }
-                    $(this).removeClass('victim').children('.victim').remove();
-                    if(new_victim > -1 && loc != new_victim) {
-                        $(this).addClass('victim').append('<img src="' + IMG_DIR + 'img/rescueB/victim' + new_victim + '.png" class="victim">'); // right
+                if(e.metaKey || e.ctrlKey) {
+                    console.log(e);
+                }
+                else {
+                    if($(this).hasClass('black-tile')){
+                        $(this).removeClass('black-tile');
+                    }else{
+                       var loc = -1;
+                       if($(this).hasClass('victim')){
+                            loc = $(this).children('img').attr('src');
+                            loc = loc.substr(loc.length - 5, 1);
+                        }
+                        // box isn't where I expected it...
+                        var x = e.pageX - this.offsetLeft - 8;
+                        var y = e.pageY - this.offsetTop - 113;
+                        var new_victim = -1;
+                        miss = false;
+                        if(plusminus(y, 25, 10) && plusminus(x, 10, 10)) {
+                            new_victim = 0; // left
+                        }
+                        else if(plusminus(y, 25, 10) && plusminus(x, 40, 10)) {
+                            new_victim = 2; // right
+                        }
+                        else if(plusminus(y, 5, 5) && plusminus(x, 25, 10)) {
+                            new_victim = 3; // top
+                        }
+                        else if(plusminus(y, 45, 5) && plusminus(x, 25, 10)) {
+                            new_victim = 1; // bottom
+                        }
+                        else {
+                            miss = true;
+                            $(this).addClass('black-tile').removeClass('victim').children('.victim').remove();
+                        }
+                        $(this).removeClass('victim').children('.victim').remove();
+                        if(new_victim > -1 && loc != new_victim && !miss) {
+                            $(this).addClass('victim').append('<img src="' + IMG_DIR + 'img/rescueB/victim' + new_victim + '.png" class="victim">'); // right
+                            //$(this).css('background', 'hsla(165, 35%, 50%, 0.3)');
+                        }
                     }
                 }
             }).contextmenu(function(){
@@ -232,6 +240,7 @@ $(document).ready(function () {
                             if(data.squares[i]){
                                 if(data.squares[i].victim != undefined){
                                     $(this).addClass('victim').append('<img src="' + IMG_DIR + 'img/rescueB/victim'+data.squares[i].victim+'.png" class="victim">');
+                                    //$(this).css('background', 'hsla(165, 35%, 50%, 0.3)');
                                 }else if(data.squares[i].black){
                                     $(this).addClass('black-tile');
                                 }
@@ -254,4 +263,30 @@ $(document).ready(function () {
 // checks a value lies within +- of target value
 function plusminus(val, comp, pad) {
 	return (val >= (comp - pad) && val <= (comp + pad));	
+}
+
+function debug() {
+    var json = {"action": "saveMaze", "mapID": 0, "name": $('#name').val(), "walls": {}, "squares": {}};
+    
+    // Iterate through walls and save them, and also every victims etc. 
+    $("td.border").each(function(i){
+        if($(this).hasClass('wall'))
+            json.walls[i] = true;
+    });
+    $("td.square").each(function(i){
+        // If there is /any/ data, we need to create the square
+        if($(this).hasClass('victim') || $(this).children('.start').length == 1 || $(this).hasClass('black-tile')){
+            json.squares[i] = {};
+            
+            if($(this).hasClass('victim')) {
+                var loc = $(this).children('img').attr('src');
+                json.squares[i].victim = parseInt(loc.substr(loc.length - 5, 1));
+            }
+            if($(this).children('.start').length == 1)
+                json.squares[i].start = true;
+            if($(this).hasClass('black-tile'))
+                json.squares[i].black = true;
+        }
+    });
+    return json;
 }
