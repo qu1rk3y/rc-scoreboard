@@ -970,6 +970,7 @@ function isEdge(a, side) {
 function getAdjacents(a, side, orig) {
     //console.log(orig);
     var adj = Array();
+    var bodge = false;
     var tests = [
         [
             [0,1],
@@ -1014,86 +1015,38 @@ function getAdjacents(a, side, orig) {
     ];
 
     var n = [getCoordFromWall(a, 0), getCoordFromWall(a, 1), getCoordFromWall(a, 2), getCoordFromWall(a, 3)];
-    for(var i = 0; i < 6; i++) {
+    for(var i = 0; i < 8; i++) {
+        if(i == 6 || i == 7) {
+            if(!isSetSame(a, orig[0])) {
+                continue;
+            }
+        }
         var next_test = n[tests[side][i][0]];
         var next_wall = tests[side][i][1];
-        /*if(i == 6 || i == 7) {
-            if(orig[1] != next_wall) {
-                console.log('top thing');
+        if(next_test == -1) {
+            next_test = a;
+            switch(next_wall) {
+                case 3: next_wall = 1; break;
+                case 1: next_wall = 3; break;
+                case 2: next_wall = 0; break;
+                case 0: next_wall = 2;
+            }
+            if(!inBounds(next_test)) {
                 continue;
             }
-            console.log(next_test, next_wall);
-            if(isSetSame(a, orig[0])) {
-                console.log('set same');
-                if(next_wall == side) {
-                    console.log('next = side');
-                    if(isBorder(next_test)) {
-                        console.log('next is border');
-                        if(side == 2 || side == 0) {
-                            if(isBorder(getCoordFromWall(orig[0], 2)) || isBorder(getCoordFromWall(orig[0], 0))) {
-                                console.log('one across is border');
-                                console.log('BYE', next_test)
-                                if(!getWalls(next_test)[1] && !getWalls(next_test)[3])
-                                    continue;
-                            }
-                        }
-                        else if(side == 1 || side == 3) {
-                            if(isBorder(getCoordFromWall(orig[0], 1)) || isBorder(getCoordFromWall(orig[0], 3))) {
-                                console.log('one across is border');
-                                console.log('BYE', next_test);
-                                if(!getWalls(next_test)[2] && !getWalls(next_test)[0])
-                                    continue;
-                            }
-                        }
-                    }
-                }
-                else {
-                    continue;
-                }
-            }
-        }*/
-        //console.log('STAYING',next_test);
-        //console.log(isBorder(n[tests[side][i][0]]));
-        //if((isBorder(n[tests[side][i][0]]) && tests[side][i][1] == side) || (n[tests[side][i][0]] == -1 && tests[side][i][1] == side) && (i == 7 || i == 8)) {
-        //    console.log('here');
-            //continue;
-            //}
-        /*if((isBorder(n[tests[side][i][0]]) && tests[side][i][1] == side) || (n[tests[side][i][0]] == -1 && tests[side][i][1] == side) 
-            && (a[0] == orig[0] && a[1] == orig[1] && a[2] == orig[2])) {
-                if(side == 0 || side == 2) {
-                    if(n[tests[side][i][0]][1] == orig[1]) {
-                        continue;
-                    }
-                }
-                else if(side == 1 || side == 3) {
-                    if(n[tests[side][i][0]][2] == orig[2]) {
-                        continue;
-                    }
-                }
-//                console.log(n[tests[side][i][0]], tests[side][i][1]);
-//            console.log('finally');
-//            continue;
+            bodge = true;
         }
-        /*if(n[tests[side][i][0]] == -1) {
-            if(tests[side][i][1] != side) {
-                adj.push(['b',1]);
-                continue;
-            }
-
-        }*/
-        if(n[tests[side][i][0]] == -1) {
-            adj.push(['b',1]);
+        if(next_test == -1)
             continue;
-        }
-            //console.log(n[tests[side][i][0]]);
-         //                       console.log(n[tests[side][i][0]]);
-        var walls = getWalls(n[tests[side][i][0]]);
-        var wall = walls[tests[side][i][1]][0];
-        if(wall == 1) {
-            if(!isExplored(n[tests[side][i][0]], tests[side][i][1])) {
-                adj.push([n[tests[side][i][0]], tests[side][i][1]]);
+        var walls = getWalls(next_test);
+        var wall = walls[next_wall][0];
+        if(wall == 1 || (bodge && isEdge(next_test, next_wall))) {
+            var explored = isExplored(next_test, next_wall);
+            if(!explored) {
+                adj.push([next_test, next_wall]);
             }
         }
+        bodge = false;
     }
     return adj;
 }
@@ -1127,11 +1080,11 @@ var val = true;
 function isFloatingR(a, side, orig) {
     explored.push([a, side]);
 
-    if(a[0] == 'b') {
+    if(isEdge(a, side)) {
         return false;
     }
     var adj = getAdjacents(a, side, orig);
-    console.log(adj);
+    console.log(adj)
     for(var i = 0; i < adj.length; i++) {
         val = isFloatingR(adj[i][0], adj[i][1], orig);
     }
