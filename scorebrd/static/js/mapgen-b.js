@@ -160,7 +160,8 @@ $(document).ready(function () {
             
             
             $('.border').click(function(){
-                $(this).toggleClass("wall");    
+                $(this).toggleClass("wall");
+                doMen();   
             });
             
             $('.square').click(function(e){
@@ -182,16 +183,16 @@ $(document).ready(function () {
                         var new_victim = -1;
                         miss = false;
                         if(plusminus(y, 25, 10) && plusminus(x, 10, 10)) {
-                            new_victim = 0; // left
+                            new_victim = 3; // left
                         }
                         else if(plusminus(y, 25, 10) && plusminus(x, 40, 10)) {
-                            new_victim = 2; // right
+                            new_victim = 1; // right
                         }
                         else if(plusminus(y, 5, 5) && plusminus(x, 25, 10)) {
-                            new_victim = 3; // top
+                            new_victim = 0; // top
                         }
                         else if(plusminus(y, 45, 5) && plusminus(x, 25, 10)) {
-                            new_victim = 1; // bottom
+                            new_victim = 2; // bottom
                         }
                         else {
                             miss = true;
@@ -202,6 +203,7 @@ $(document).ready(function () {
                             $(this).addClass('victim').append('<img src="' + IMG_DIR + 'img/rescueB/victim' + new_victim + '.png" class="victim">'); // right
                             //$(this).css('background', 'hsla(165, 35%, 50%, 0.3)');
                         }
+                        doMen();
                     }
                 }
             }).contextmenu(function(){
@@ -249,7 +251,7 @@ $(document).ready(function () {
                                 }
                             }
                         });
-                
+                        doMen();
                     },
                     error: function(obj,errMsg){alert("Error while fetching maze: " + errMsg);}
                 });
