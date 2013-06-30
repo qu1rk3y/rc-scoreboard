@@ -968,46 +968,31 @@ function isEdge(a, side) {
 
 // generates adjacent edges (hacky due to horrible HTML design - thanks Fredrik ;-) )
 function getAdjacents(a, side, orig) {
-    //console.log(orig);
     var adj = Array();
-    var bodge = false;
     var tests = [
-        [
-            [0,1],
-            [0,3],
-            [1,0],
-            [1,3],
+        [         
             [3,0],
-            [3,1],
-            [0,0],
-            [2,0],
-            
+            [0,3],
+            [0,1],
+            [1,0],
+            [1,3],
+            [3,1]
         ],
-        [   
+        [
             [0,1],
             [0,2],
             [1,0],
             [1,2],
-            [2,1],
             [2,0],
-            [3,1],
-            [1,1]
-            // new
-            [0,3],
-            [0,0],
-            [2,3],
-            [2,2]
+            [2,1]
         ],
         [
+            [3,1],
             [1,3],
             [1,2],
             [2,1],
             [2,3],
-            [3,1],
-            [3,2],
-            [0,2],
-            //[2,2]
-            
+            [3,2]
         ],
         [
             [0,3],
@@ -1015,47 +1000,39 @@ function getAdjacents(a, side, orig) {
             [2,0],
             [2,3],
             [3,2],
-            [3,0],
-            [3,3],
-            [1,3]
+            [3,0]
         ]
     ];
 
     var n = [getCoordFromWall(a, 0), getCoordFromWall(a, 1), getCoordFromWall(a, 2), getCoordFromWall(a, 3)];
-    for(var i = 0; i < 8; i++) {
-        if(i == 6 || i == 7) {
-            if(!isSetSame(a, orig[0])) {
-                continue;
-            }
-        }
+    for(var i = 0; i < 6; i++) {
         var next_test = n[tests[side][i][0]];
         var next_wall = tests[side][i][1];
         if(next_test == -1) {
             next_test = a;
             switch(next_wall) {
-                case 3: next_wall = 1; break;
-                case 1: next_wall = 3; break;
-                case 2: next_wall = 0; break;
-                case 0: next_wall = 2;
+                case 1:
+                    next_wall = 3; break;
+                case 3:
+                    next_wall = 1; break;
+                case 0:
+                    next_wall = 2; break;
+                case 2:
+                    next_wall = 0;
             }
             if(!inBounds(next_test)) {
                 continue;
             }
-            bodge = true;
         }
-        if(next_test == -1)
-            continue;
-        var walls = getWalls(next_test);
-        var wall = walls[next_wall][0];
-        if(wall == 1 || (bodge && isEdge(next_test, next_wall))) {
-            var explored = isExplored(next_test, next_wall);
-            if(!explored) {
-                adj.push([next_test, next_wall]);
-            }
+        if(hasWall(next_test, next_wall) && !isExplored(next_test, next_wall)) {
+            adj.push([next_test, next_wall]);
         }
-        bodge = false;
     }
     return adj;
+}
+
+function hasWall(a, side) {
+    return (a != -1) && (maze[a[0]][a[1]][a[2]].walls[side][0] || isEdge(a, side));
 }
 
 // checks the explored set for a given node
@@ -1069,31 +1046,26 @@ function isExplored(x, side) {
 }
 
 // checks to see whether a given wall side is floating (for victim)
-function isFloating(a, side) {
-    if(isBorder(a)) {
-        //console.log('why not here?');
+function isConnected(a, side) {
+    clear();
+    if(!hasWall(a,side)) {
         return false;
     }
-    else {
-        clear();
-        return isFloatingR(a, side, [a,side]);
-    }
+    return isConnectedR(a,side,[a,side]);
 }
 
 // global for the recursive floating checker
-var val = true;
-
+var val = false;
+var route = Array();
 // depth-first search for finding a border edge
-function isFloatingR(a, side, orig) {
+function isConnectedR(a, side, orig) {
     explored.push([a, side]);
-
-    if(isEdge(a, side)) {
-        return false;
+    if(isEdge(a, side)) { 
+        return true;
     }
     var adj = getAdjacents(a, side, orig);
-    console.log(adj)
     for(var i = 0; i < adj.length; i++) {
-        val = isFloatingR(adj[i][0], adj[i][1], orig);
+        val = isConnectedR(adj[i][0], adj[i][1], orig);
     }
     return val;
 }
@@ -1105,42 +1077,10 @@ function getMan(a) {
 
 // clears the data stores for the floating checker
 function clear() {
-    val = true;
+    val = false;
     explored = Array();
+    route = Array();
 }
-
-// evaluates each wall for float status
-function evaluateWalls() {
-    // floor 0
-    for(var i = 0; i < 4; i++) {
-        for(var j = 0; j < 10; j++) {
-            for(var k = 0; k < 4; k++) {
-                evaluateWall([0,i,j], k);
-            }
-        }
-    }
-    // floor 2
-    for(var i = 0; i < 4; i++) {
-        for(var j = 0; j < 3; j++) {
-            for(var k = 0; k < 4; k++) {    
-                evaluateWall([2,i,j], k);
-            }
-        }
-    }
-}
-
-// evaluates a single wall for float status
-function evaluateWall(a, side) {
-    maze[a[0]][a[1]][a[2]].walls[side][1] = (isFloating(a, side)) ? 1 : 0;
-}
-
-/*var borders = Array();
-
-function borderArray() {
-    $('td.border').each(function() {
-        borders.push($(this));
-    });
-}*/
 
 // adds each ('square') to an array for lookup later
 function squareArray() {
@@ -1149,12 +1089,24 @@ function squareArray() {
     });
 }
 
+function evaluateMen() {
+    for(var i = 0; i < 4; i++) {
+        for(var j = 0; j < 10; j++) {
+            if(getMan([0,i,j]) != -1) {
+                console.log(i,j)
+                maze[0][i][j].walls[getMan([0,i,j])][1] = !isWallToucher([0,i,j]);
+            }
+        }
+    }
+}
+
 // sets the type of each man (floating or linear)
 function setMenTypes() {
     // floor 0
     for(var i = 0; i < 4; i++) {
         for(var j = 0; j < 10; j++) {
             if(getMan([0,i,j]) != -1) {
+                console.log('p', i, j)
                 if(maze[0][i][j].walls[getMan([0,i,j])][1] == 1) {
                     // floating
                     //console.log('float');
@@ -1193,9 +1145,25 @@ function setMenTypes() {
     }
 }
 
+function isWallToucher(a) {
+    // this works if the rules are changed to something that makes more sense
+    //return (isBorder(a)) || (isConnected(a, getMan(a)));
+    
+    // otherwise use this
+    if(isBorder(a)) {
+        return true;
+    }
+    else {
+        switch(getMan(a)) {
+            case 0: case 2: return (isConnected(a, 0) || isConnected(a, 2)); break;
+            case 1: case 3: return (isConnected(a, 1) || isConnected(a, 3)); break;
+        }
+    }
+}
+
 function doMen() {
-    /*populateAll();
-    evaluateWalls();
+    populateAll();
+    evaluateMen();
     squareArray();
-    setMenTypes();*/
+    setMenTypes();
 }
