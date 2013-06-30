@@ -980,7 +980,8 @@ function getAdjacents(a, side, orig) {
             [3,0],
             [3,1],
             [0,0],
-            [2,0]
+            [2,0],
+            
         ],
         [   
             [0,1],
@@ -991,6 +992,11 @@ function getAdjacents(a, side, orig) {
             [2,0],
             [3,1],
             [1,1]
+            // new
+            [0,3],
+            [0,0],
+            [2,3],
+            [2,2]
         ],
         [
             [1,3],
@@ -1000,7 +1006,8 @@ function getAdjacents(a, side, orig) {
             [3,1],
             [3,2],
             [0,2],
-            [2,2]
+            //[2,2]
+            
         ],
         [
             [0,3],
